@@ -1,0 +1,30 @@
+---
+- hosts: server
+  gather_facts: true
+  vars_files:
+    - secrets.yml
+  tasks:
+    - import_tasks: tasks/basic.yml
+    - import_tasks: tasks/user.yml
+    - import_tasks: tasks/firewall.yml
+    - import_tasks: tasks/nginx.yml
+    - import_tasks: tasks/docker.yml
+
+  # Handlers
+  handlers:
+    - name: reload ufw
+      tags: ufw
+      ufw:
+        state: reloaded
+
+    - name: restart nginx
+      tags: nginx
+      service:
+        name: nginx
+        state: restarted
+
+    - name: reload ssh.service
+      tags: ssh.service
+      service:
+        name: ssh.service
+        state: restarted

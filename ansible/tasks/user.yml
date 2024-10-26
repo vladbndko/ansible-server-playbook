@@ -1,0 +1,58 @@
+- name: Ensure group "docker" exists
+  tags: user
+  group:
+    name: docker
+    state: present
+
+- name: Create a user
+  tags: user
+  user:
+    name: "{{ username }}"
+    password: "{{ password | password_hash('sha512') }}"
+    groups:
+      - sudo
+      - docker
+    shell: /bin/bash
+    state: present
+
+- name: Create .ssh folder
+  tags: user
+  file:
+    path: "~{{ username }}/.ssh"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
+    mode: 0700
+
+- name: Add public key to authorized_keys
+  tags: user
+  authorized_key:
+    user: "{{ username }}"
+    state: present
+    key: "{{ lookup('file', '/root/.ssh/key.pub') }}"
+
+- name: Allow specific users to log in
+  tags: user
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^AllowUsers'
+    line: 'AllowUsers root {{ username }}'
+    state: present
+
+- name: Allow connection without password
+  tags: user
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication yes'
+    line: 'PasswordAuthentication no'
+    state: present
+
+- name: Add {{ username }} to sudoers file
+  tags: user
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^{{ username }}'
+    line: '{{ username }} ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+  notify:
+    - reload ssh.service

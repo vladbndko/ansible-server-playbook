@@ -1,0 +1,7 @@
+services:
+  ansible:
+    build: .
+    environment:
+      ANSIBLE_HOST_KEY_CHECKING: false
+    volumes:
+      - ./ansible:/ansible

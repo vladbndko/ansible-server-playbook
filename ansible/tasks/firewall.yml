@@ -1,0 +1,30 @@
+- name: Install ufw
+  tags: firewall
+  apt:
+    package: ufw
+    state: present
+
+- name: Configure ufw rules
+  tags: firewall
+  ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  with_items:
+    - { rule: "limit", port: "{{ ssh_port | default('22') }}", proto: "tcp" }
+    - { rule: "allow", port: "80", proto: "tcp" }
+    - { rule: "allow", port: "443", proto: "tcp" }
+  notify:
+    - reload ufw
+
+- name: Enable ufw logging
+  tags: firewall
+  ufw:
+    logging: on
+  notify:
+    - reload ufw
+
+- name: Enable ufw
+  tags: firewall
+  ufw:
+    state: enabled
